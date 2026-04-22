@@ -1,11 +1,32 @@
 {
-    "name": "video-image-processor",
-    "version": "1.0.0",
-    "main": "server.js",
-    "type": "module",
-    "dependencies": {
-        "express": "^4.19.2",
-        "axios": "^1.6.0",
-        "fluent-ffmpeg": "^2.1.2"
-    }
+  "name": "temp_media_server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/A511-git/temp_media_server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/A511-git/temp_media_server/issues"
+  },
+  "homepage": "https://github.com/A511-git/temp_media_server#readme",
+  "dependencies": {
+    "7zip-bin": "^5.2.0",
+    "axios": "^1.15.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "googleapis": "^171.4.0",
+    "node-7z": "^3.0.0",
+    "unzipper": "^0.12.3"
+  }
 }

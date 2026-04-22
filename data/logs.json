@@ -1,0 +1,22 @@
+{
+  "1776839857303": [
+    {
+      "time": "2026-04-22T06:37:37.305Z",
+      "stage": "start",
+      "type": "archive",
+      "url": "https://gofile.io/d/T7IqC0"
+    },
+    {
+      "time": "2026-04-22T06:38:25.928Z",
+      "stage": "error",
+      "error": ".\\data\\temp\\1776839857303_AA - Fleurdelys Selfies and Castorice Selfies - Wuthering Waves and HonkaiStar Rail.rar"
+    }
+  ],
+  "1776839735921": [
+    {
+      "time": "2026-04-22T06:41:03.547Z",
+      "stage": "error",
+      "error": "Download produced no file: ./data/temp/1776839735921_CG - Rem - ReZero.rar"
+    }
+  ]
+}
