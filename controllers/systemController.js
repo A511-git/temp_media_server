@@ -1,18 +1,30 @@
-id = "bqv9z8"
+// controllers/systemController.js
+
 const os = require("os");
 const { spawnSync } = require("child_process");
+
+function safeSpawn(cmd, args, opts = {}) {
+    const res = spawnSync(cmd, args, {
+        encoding: "utf-8",
+        timeout: 3000,
+        ...opts
+    });
+
+    if (res.error || res.status === null || res.status !== 0) return null;
+    return res.stdout || "";
+}
 
 function getCpuDetails() {
     const platform = os.platform();
 
     try {
         if (platform === "win32") {
-            const res = spawnSync(
-                "wmic cpu get NumberOfCores,NumberOfLogicalProcessors /format:list",
-                { shell: true, encoding: "utf-8" }
+            const out = safeSpawn(
+                "wmic",
+                ["cpu", "get", "NumberOfCores,NumberOfLogicalProcessors", "/format:list"],
+                { shell: false }
             );
-
-            const out = res.stdout;
+            if (!out) return fallback();
 
             const coresMatch = out.match(/NumberOfCores=(\d+)/);
             const threadsMatch = out.match(/NumberOfLogicalProcessors=(\d+)/);
@@ -24,8 +36,8 @@ function getCpuDetails() {
         }
 
         if (platform === "linux") {
-            const res = spawnSync("lscpu", { shell: true, encoding: "utf-8" });
-            const out = res.stdout;
+            const out = safeSpawn("lscpu", [], { shell: false });
+            if (!out) return fallback();
 
             const coresMatch = out.match(/Core\(s\) per socket:\s+(\d+)/);
             const socketsMatch = out.match(/Socket\(s\):\s+(\d+)/);
@@ -42,17 +54,21 @@ function getCpuDetails() {
         }
 
         if (platform === "darwin") {
-            const cores = spawnSync("sysctl -n hw.physicalcpu", { shell: true, encoding: "utf-8" });
-            const threads = spawnSync("sysctl -n hw.logicalcpu", { shell: true, encoding: "utf-8" });
+            const cores = safeSpawn("sysctl", ["-n", "hw.physicalcpu"], { shell: false });
+            const threads = safeSpawn("sysctl", ["-n", "hw.logicalcpu"], { shell: false });
 
             return {
-                physicalCores: parseInt(cores.stdout),
-                logicalThreads: parseInt(threads.stdout)
+                physicalCores: cores ? parseInt(cores.trim()) : null,
+                logicalThreads: threads ? parseInt(threads.trim()) : null
             };
         }
 
     } catch (e) { }
 
+    return fallback();
+}
+
+function fallback() {
     return {
         physicalCores: null,
         logicalThreads: os.cpus().length
@@ -67,7 +83,7 @@ function system(req, res) {
         cpu: {
             model: cpus[0]?.model || "unknown",
             speedMHz: cpus[0]?.speed || "unknown",
-            logicalThreads: cpuDetails.logicalThreads || cpus.length,
+            logicalThreads: cpuDetails.logicalThreads ?? cpus.length,
             physicalCores: cpuDetails.physicalCores,
             perCore: cpus.map((c, i) => ({
                 core: i,
