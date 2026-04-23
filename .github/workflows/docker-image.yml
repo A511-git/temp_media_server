@@ -13,22 +13,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # Convert repo name to lowercase
       - name: Set lowercase repo name
         run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
-      # Login to GitHub Container Registry
       - name: Login to GHCR
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # Build Docker image
       - name: Build image
         run: docker build -t ghcr.io/${{ env.REPO_LC }}:latest .
 
-      # Push Docker image
       - name: Push image
         run: docker push ghcr.io/${{ env.REPO_LC }}:latest
