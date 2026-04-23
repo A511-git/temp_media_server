@@ -3,7 +3,8 @@ FROM node:20-slim
 
 # -------- INSTALL FFMPEG + UNRAR --------
 # unrar (non-free) requires the non-free repo on Debian
-RUN echo "deb http://deb.debian.org/debian bookworm non-free" \
+# -------- INSTALL FFMPEG + UNRAR --------
+RUN echo "deb http://deb.debian.org/debian bookworm non-free non-free-firmware" \
         >> /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
