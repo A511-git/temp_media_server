@@ -14,20 +14,42 @@ async function processArchiveTask(jobId, url, password, matchText) {
     const files = await listFiles(url, password);
 
     const filtered = matchText
-        ? files.filter(f => f.name.includes(matchText))
+        ? files.filter(f => f.name.trim() === matchText.trim())
         : files;
 
     for (let f of filtered) {
-        const filePath = `${TEMP}/${jobId}_${f.name}`;
+        const safeName = f.name.replace(/[^\w.-]/g, "_");
+        const filePath = `${TEMP}/${jobId}_${safeName}`;
 
-        const stats = fs.statSync(filePath);
-        if (stats.size < 10000) {
-            throw new Error(`Invalid archive (too small): ${filePath}`);
-        }
+        // 🔥 DOWNLOAD FIRST (this fixes your ENOENT crash)
         await downloadFile(f, filePath);
 
+        // 🔥 CHECK FILE EXISTS
+        if (!fs.existsSync(filePath)) {
+            throw new Error(`Download failed (missing file): ${filePath}`);
+        }
+
+        const stats = fs.statSync(filePath);
+
+        // 🔥 SIZE VALIDATION (avoid fake downloads)
+        if (stats.size < 50000) {
+            throw new Error(`Invalid archive (too small): ${filePath}`);
+        }
+
+        // 🔥 FORMAT VALIDATION (RAR / ZIP only)
+        const fd = fs.openSync(filePath, "r");
+        const header = Buffer.alloc(8);
+        fs.readSync(fd, header, 0, 8, 0);
+        fs.closeSync(fd);
+
+        const isRAR = header.toString("ascii", 0, 4) === "Rar!";
+        const isZIP = header[0] === 0x50 && header[1] === 0x4B;
+
+        if (!isRAR && !isZIP) {
+            throw new Error(`Invalid archive format: ${filePath}`);
+        }
+
         if (f.name.endsWith(".zip") || f.name.endsWith(".rar")) {
-            const safeName = f.name.replace(/[^\w.-]/g, "_");
             const outDir = `${TEMP}/${jobId}_${safeName}_extract`;
             await extract(filePath, outDir, password, jobId);
         }

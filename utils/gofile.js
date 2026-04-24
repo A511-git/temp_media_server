@@ -69,9 +69,9 @@ async function fetchFolder(cid, token, wt, password, basePath = "", files = []) 
         session.get(url, {
             headers: {
                 "Authorization": `Bearer ${token}`,
-                "Cookie":        `accountToken=${token}`,
+                "Cookie": `accountToken=${token}`,
                 "X-Website-Token": wt,
-                "X-BL":           "en-US"
+                "X-BL": "en-US"
             }
         })
     );
@@ -113,9 +113,9 @@ async function fetchFolder(cid, token, wt, password, basePath = "", files = []) 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 async function listFiles(url, password = null) {
-    const cid   = url.split("/").pop();
+    const cid = url.split("/").pop();
     const token = await getToken();
-    const wt    = buildWebsiteToken(BASE_HEADERS["User-Agent"], token);
+    const wt = buildWebsiteToken(BASE_HEADERS["User-Agent"], token);
     return fetchFolder(cid, token, wt, password);
 }
 
@@ -124,33 +124,38 @@ async function downloadFile(file, dest) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
     const token = await getToken();
-    const wt    = buildWebsiteToken(BASE_HEADERS["User-Agent"], token);
+    const wt = buildWebsiteToken(BASE_HEADERS["User-Agent"], token);
 
-    const res = await withRetry(() =>
-        session.get(file.link, {
+    await withRetry(async () => {
+        const res = await session.get(file.link, {
             responseType: "stream",
             headers: {
-                "Authorization":   `Bearer ${token}`,
-                "Cookie":          `accountToken=${token}`,
+                "Authorization": `Bearer ${token}`,
+                "Cookie": `accountToken=${token}`,
                 "X-Website-Token": wt
             }
-        })
-    );
+        });
 
-    const contentType = res.headers["content-type"] || "";
-    if (contentType.includes("text/html")) {
-        throw new Error(`Invalid download for ${file.name}: received HTML (link may have expired)`);
-    }
+        const contentType = res.headers["content-type"] || "";
+        if (contentType.includes("text/html")) {
+            throw new Error(`Invalid download for ${file.name}: HTML received`);
+        }
 
-    const writer = fs.createWriteStream(dest);
-    await new Promise((resolve, reject) => {
-        res.data.pipe(writer);
-        writer.on("finish", resolve);
-        writer.on("error", reject);
-        res.data.on("error", reject);
+        const writer = fs.createWriteStream(dest);
+
+        await new Promise((resolve, reject) => {
+            res.data.pipe(writer);
+            writer.on("finish", resolve);
+            writer.on("error", reject);
+            res.data.on("error", reject);
+        });
     });
 
-    if (!fs.existsSync(dest)) throw new Error(`Download produced no file: ${dest}`);
+    const stats = fs.existsSync(dest) ? fs.statSync(dest) : null;
+
+    if (!stats || stats.size === 0) {
+        throw new Error(`Download failed or empty: ${dest}`);
+    }
 }
 
 async function downloadAll(files, baseDir, concurrency = 3) {
