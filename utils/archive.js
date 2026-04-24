@@ -37,11 +37,17 @@ async function extract(filePath, outDir, password, jobId) {
         proc.stderr.on("data", d => { stderr += d.toString(); });
 
         proc.on("close", code => {
-            log(jobId, "extract:exit", { code, stderr: stderr.slice(-300) });
+            log(jobId, "extract:exit", {
+                code,
+                stderr: stderr.slice(-300),
+                stdout: stdout.slice(-300)
+            });
 
             if (code !== 0) {
+                const msg = (stderr + stdout).slice(-300);
+
                 return reject(new Error(
-                    `unrar failed (code ${code}): ${stderr.slice(-200) || stdout.slice(-200)}`
+                    `unrar failed (code ${code}): ${msg}`
                 ));
             }
 

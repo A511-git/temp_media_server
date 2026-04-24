@@ -11,7 +11,7 @@ async function processArchiveTask(jobId, url, password, matchText) {
 
     log(jobId, { stage: "start", type: "archive", url });
 
-    const files = await listFiles(url);
+    const files = await listFiles(url, password);
 
     const filtered = matchText
         ? files.filter(f => f.name.includes(matchText))
@@ -20,6 +20,10 @@ async function processArchiveTask(jobId, url, password, matchText) {
     for (let f of filtered) {
         const filePath = `${TEMP}/${jobId}_${f.name}`;
 
+        const stats = fs.statSync(filePath);
+        if (stats.size < 10000) {
+            throw new Error(`Invalid archive (too small): ${filePath}`);
+        }
         await downloadFile(f, filePath);
 
         if (f.name.endsWith(".zip") || f.name.endsWith(".rar")) {
