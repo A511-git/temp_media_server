@@ -67,5 +67,6 @@ app.get("/cleanup", async (req, res) => {
     }
 });
 app.use("/output", express.static(OUT));
+app.use("/temp", express.static("./data/temp"));
 
 app.listen(3000, () => console.log("Running on 3000"));
