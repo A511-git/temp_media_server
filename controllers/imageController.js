@@ -23,7 +23,7 @@ async function processImageTask(jobId, url) {
     });
 
     const tProcessStart = Date.now();
-    compressImage(input, output);
+    compressImage(input, output, jobId);
     const tProcessEnd = Date.now();
 
     const t1 = Date.now();

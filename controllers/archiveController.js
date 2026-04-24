@@ -20,10 +20,11 @@ async function processArchiveTask(jobId, url, password, matchText) {
     for (let f of filtered) {
         const filePath = `${TEMP}/${jobId}_${f.name}`;
 
-        await downloadFile(f, filePath);        
+        await downloadFile(f, filePath);
 
         if (f.name.endsWith(".zip") || f.name.endsWith(".rar")) {
-            const outDir = `${TEMP}/${jobId}_${f.name}_extract`;
+            const safeName = f.name.replace(/[^\w.-]/g, "_");
+            const outDir = `${TEMP}/${jobId}_${safeName}_extract`;
             await extract(filePath, outDir, password, jobId);
         }
     }

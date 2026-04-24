@@ -4,7 +4,6 @@ const fs = require("fs");
 const { ensureDir, ensureFile } = require("./fsSafe");
 const { log, raw } = require("./consoleLogger");
 
-// ✅ SAFE spawn (no shell, no string parsing bugs)
 function runFFmpeg(args, jobId) {
     return new Promise((resolve, reject) => {
         const proc = spawn("ffmpeg", args);
@@ -91,4 +90,59 @@ async function compressVideo(input, output, jobId) {
     throw new Error("All ffmpeg attempts failed — no output generated");
 }
 
-module.exports = { compressVideo };
+async function compressImage(input, output, jobId) {
+    ensureFile(input, "Input image");
+    ensureDir(output);
+
+    log(jobId, "image:input", {
+        size: fs.statSync(input).size
+    });
+
+    // 🔥 MAIN (high-quality WebP)
+    try {
+        await runFFmpeg([
+            "-y",
+            "-i", input,
+
+            // WebP encoding
+            "-c:v", "libwebp",
+            "-quality", "90",        // perceptual quality target
+            "-compression_level", "6", // max compression effort
+            "-preset", "photo",      // best for images
+            "-q:v", "90",            // reinforces quality
+            "-loop", "0",
+
+            output
+        ], jobId);
+
+        if (fs.existsSync(output)) return;
+
+        throw new Error("no output");
+
+    } catch (e) {
+        log(jobId, "ffmpeg:image_main_failed", { message: e.message });
+    }
+
+    // 🔥 FALLBACK (slightly lower quality, safer)
+    try {
+        log(jobId, "ffmpeg:image_fallback");
+
+        await runFFmpeg([
+            "-y",
+            "-i", input,
+            "-c:v", "libwebp",
+            "-quality", "80",
+            "-compression_level", "4",
+            output
+        ], jobId);
+
+        if (fs.existsSync(output)) return;
+
+    } catch (e) {
+        log(jobId, "ffmpeg:image_fallback_failed", { message: e.message });
+    }
+
+    throw new Error("Image compression failed — no output generated");
+}
+
+module.exports = { compressVideo, compressImage };

@@ -4,6 +4,7 @@ const { ensureDir } = require("./fsSafe");
 const { log } = require("./consoleLogger");
 
 async function extract(filePath, outDir, password, jobId) {
+    if (!jobId) jobId = "unknown";
     ensureDir(outDir);
 
     log(jobId, "extract:start", {
@@ -14,18 +15,20 @@ async function extract(filePath, outDir, password, jobId) {
 
     return new Promise((resolve, reject) => {
         const args = [
-            "x",           // extract with full paths
-            "-y",          // yes to all prompts
-            password ? `-p${password}` : "-p-",  // password or none
+            "x",
+            "-y",
+            password ? `-p${password}` : "-p-",
+            "-o+",              // ✅ correct overwrite flag
             filePath,
-            `-o${outDir}`  // output dir (no space after -o)
+            outDir              // ✅ output dir as separate argument
         ];
 
-        log(jobId, "extract:cmd", { bin: "unrar", args: args.map(a =>
-            a.startsWith("-p") && password ? "-p***" : a
-        )});
+        log(jobId, "extract:cmd", {
+            bin: "unrar",
+            args
+        });
 
-        const proc = spawn("unrar", args);
+        const proc = spawn("unrar", args, { shell: false });
 
         let stdout = "";
         let stderr = "";
