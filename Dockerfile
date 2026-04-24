@@ -15,6 +15,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
+# PERMISSION FOR 7z
+RUN chmod +x node_modules/7zip-bin/linux/x64/7za
+
 # -------- SOURCE --------
 COPY . .
 
